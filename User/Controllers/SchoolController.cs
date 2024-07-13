@@ -1,51 +1,56 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using User.Data.Repositories.SchoolRepositories;
+using Microsoft.EntityFrameworkCore;
+using User.Data;
 using User.DTOs.Input;
+using User.DTOs.Output;
 using User.Models;
 
 namespace User.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class SchoolController : ControllerBase
 {
-    private readonly ISchoolRepository _schoolRepository;
+    private readonly AppDbContext _context;
+    private readonly IMapper _mapper;
 
-    public SchoolController(ISchoolRepository schoolRepository)
+    public SchoolController(AppDbContext context, IMapper mapper)
     {
-        _schoolRepository = schoolRepository;
+        _context = context;
+        _mapper = mapper;
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<School>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<SchoolOutputDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSchools()
     {
-        var schools = await _schoolRepository.GetSchools();
+        var schools = await _context.Schools.ToListAsync();
 
         if (schools == null)
         {
             return NotFound();
         }
-        return Ok(schools);
+        return Ok(_mapper.Map<IEnumerable<SchoolOutputDto>>(schools));
     }
 
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(School), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SchoolOutputDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSchool(int id)
     {
-        var school = await _schoolRepository.GetSchool(id);
+        var school = await _context.Schools.FirstOrDefaultAsync(school => school.Id == id);
 
         if (school == null)
         {
             return NotFound();
         }
-        return Ok(school);
+        return Ok(_mapper.Map<SchoolOutputDto>(school));
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(School), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(SchoolOutputDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AddSchool([FromBody] SchoolInputDto schoolDto)
     {
@@ -54,9 +59,63 @@ public class SchoolController : ControllerBase
             return BadRequest("Name and Address are required");
         }
 
-        var id = await _schoolRepository.CreateSchool(schoolDto);
+        var school = new School
+        {
+            Name = schoolDto.Name,
+            Address = schoolDto.Address
+        };
 
-        return CreatedAtAction(nameof(GetSchool), new { id },
-            new School { Address = schoolDto.Address, Id = id, Name = schoolDto.Name });
+        _context.Schools.Add(school);
+
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetSchool), new { school.Id }, _mapper.Map<SchoolOutputDto>(school));
+    }
+
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateSchool(int id, [FromBody] SchoolInputDto schoolDto)
+    {
+        if (String.IsNullOrWhiteSpace(schoolDto.Name) || String.IsNullOrWhiteSpace(schoolDto.Address))
+        {
+            return BadRequest("Name and Address are required");
+        }
+
+        var school = await _context.Schools.FindAsync(id);
+
+        if (school is null)
+        {
+            return NotFound();
+        }
+
+        school.Name = schoolDto.Name;
+        school.Address = schoolDto.Address;
+
+        _context.Schools.Update(school);
+
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteSchool(int id)
+    {
+        var school = await _context.Schools.FindAsync(id);
+
+        if (school is null)
+        {
+            return NotFound();
+        }
+
+        _context.Schools.Remove(school);
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }

@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.OpenApi.Models;
 using User.Extensions;
 
@@ -10,7 +9,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddDataAccess(builder.Configuration);
-builder.Services.AddRepositories();
 
 
 //Swagger Documentation Section
@@ -30,17 +28,14 @@ var info = new OpenApiInfo()
 
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(u =>
-            {
-                u.RouteTemplate = "swagger/{documentName}/swagger.json";
-            });
-
+    app.UseSwagger();
     app.UseSwaggerUI(c =>
         {
             c.RoutePrefix = "swagger";

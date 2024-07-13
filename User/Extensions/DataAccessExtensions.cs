@@ -1,4 +1,5 @@
-using User.Services;
+using Microsoft.EntityFrameworkCore;
+using User.Data;
 
 namespace User.Extensions;
 
@@ -6,11 +7,9 @@ public static class DataAccessExtensions
 {
     public static IServiceCollection AddDataAccess(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton(serviceProvider =>
+        services.AddDbContext<AppDbContext>(options =>
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection") ??
-                                   throw new InvalidOperationException("Connection string is missing");
-            return new SqlConnectionFactory(connectionString);
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
         });
 
         return services;
