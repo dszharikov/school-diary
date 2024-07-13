@@ -59,11 +59,7 @@ public class SchoolController : ControllerBase
             return BadRequest("Name and Address are required");
         }
 
-        var school = new School
-        {
-            Name = schoolDto.Name,
-            Address = schoolDto.Address
-        };
+        var school = _mapper.Map<School>(schoolDto);
 
         _context.Schools.Add(school);
 

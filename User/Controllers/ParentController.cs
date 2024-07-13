@@ -114,14 +114,7 @@ public class ParentController : ControllerBase
             return NotFound("Student not found");
         }
 
-        var parent = new Parent
-        {
-            Name = parentDto.Name,
-            Email = parentDto.Email,
-            Role = Constants.ParentRoleName,
-            SchoolId = parentDto.SchoolId,
-            StudentId = parentDto.StudentId,
-        };
+        var parent = _mapper.Map<Parent>(parentDto);
 
         await _context.Parents.AddAsync(parent);
         await _context.SaveChangesAsync();

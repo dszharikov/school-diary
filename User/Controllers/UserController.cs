@@ -117,14 +117,7 @@ public class UserController : ControllerBase
             return NotFound("School not found");
         }
 
-        var user = new Models.User
-        {
-            Name = userDto.Name,
-            Role = userDto.Role,
-            Email = userDto.Email,
-            SchoolId = userDto.SchoolId,
-            School = school
-        };
+        var user = _mapper.Map<Models.User>(userDto);
 
         _context.Users.Add(user);
 

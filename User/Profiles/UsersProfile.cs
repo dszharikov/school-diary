@@ -16,7 +16,8 @@ public class UsersProfile : Profile
         CreateMap<Models.User, UserOutputDto>();
 
         // parent
-        CreateMap<ParentInputDto, Parent>();
+        CreateMap<ParentInputDto, Parent>()
+        .ForMember(dest => dest.Role, opt => opt.MapFrom(src => Constants.ParentRoleName));
         CreateMap<Parent, ParentOutputDto>();
 
         // school
